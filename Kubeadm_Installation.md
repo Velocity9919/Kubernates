@@ -105,9 +105,122 @@ systemctl disable ufw
 ```
 kubeadm init
 ```
+## Step 3: Initialize the First Master Node
+1. Initialize the first master node:
+```
+sudo kubeadm init --control-plane-endpoint "LOAD_BALANCER_IP:6443" --upload-certs --pod-network-cidr=10.244.0.0/16
+```
+2. Set up kubeconfig for the first master node:
+```
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+3.Install Calico network plugin:
+```
+kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+```
 
+## Step 4: Join the Second & third Master Node
+1. Get the join command and certificate key from the first master node:
+```
+kubeadm token create --print-join-command --certificate-key $(kubeadm init phase upload-certs --upload-certs | tail -1)
+```
+2. Run the join command on the second master node:
+```
+sudo kubeadm join LOAD_BALANCER_IP:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash> --control-plane --certificate-key <certificate-key>
+```
+3. Set up kubeconfig for the second master node:
+```
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+```
+## Step 5: Join the Worker Nodes
+1. Get the join command from the first master node:
+```
+kubeadm token create --print-join-command
+```
+2. Run the join command on each worker node:
+```
+sudo kubeadm join LOAD_BALANCER_IP:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+```
+## Step 6: Verify the Cluster
+Check the status of all nodes:
+```
+kubectl get nodes
+```
+3. Check the status of all pods:
+```
+kubectl get pods --all-namespaces
+```
 
+## Step 7: Install Ingress-NGINX Controller: (Initialize the First Master Node)
 
+1. Clone the repository :
+```
+git clone https://github.com/nginx/kubernetes-ingress.git --branch v5.3.1
+```
+2. Change the active directory :
+```
+cd kubernetes-ingress
+``
+3. Create a namespace and a service account:
+```
+kubectl apply -f deployments/common/ns-and-sa.yaml
+```
+4. Create a cluster role and binding for the service account:
+```
+kubectl apply -f deployments/rbac/rbac.yaml
+```
+5.(Optional) Create a secret for the default NGINX server’s TLS certificate and key.
+
+```
+kubectl apply -f examples/shared-examples/default-server-secret/default-server-secret.yaml
+```
+6. Create a ConfigMap to customize your NGINX settings:
+```
+kubectl apply -f deployments/common/nginx-config.yaml
+```
+7. Create an IngressClass resource. NGINX Ingress Controller won’t start without an IngressClass resource.
+```
+kubectl apply -f deployments/common/ingress-class.yaml
+```
+
+8. Install CRDs after cloning the repo :
+```
+kubectl apply -f config/crd/bases/k8s.nginx.org_virtualservers.yaml
+kubectl apply -f config/crd/bases/k8s.nginx.org_virtualserverroutes.yaml
+kubectl apply -f config/crd/bases/k8s.nginx.org_transportservers.yaml
+kubectl apply -f config/crd/bases/k8s.nginx.org_policies.yaml
+kubectl apply -f config/crd/bases/k8s.nginx.org_globalconfigurations.yaml
+```
+
+9. Deploy NGINX Ingress Controller:
+
+Using a Deployment:
+```
+kubectl apply -f deployments/deployment/nginx-ingress.yaml
+```
+Using a DaemonSet :
+```
+kubectl apply -f deployments/daemon-set/nginx-ingress.yaml
+```
+Using a StatefulSet :
+```
+kubectl apply -f deployments/stateful-set/nginx-ingress.yaml
+```
+```
+kubectl get po -n nginx-ingress
+
+kubectl get po -n nginx-ingress -o wide
+
+kubectl edit deploy nginx-ingress -n nginx-ingress
+```
+go to "sepc:
+        hostNetwork : true  (you have to add this above automountServiceAccountToken : true)
+
+now it can use host network ip
 
 
 
