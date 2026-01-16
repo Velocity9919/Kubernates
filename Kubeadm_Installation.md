@@ -222,5 +222,6 @@ go to "sepc:
 
 now it can use host network ip
 
+https://docs.nginx.com/nginx-ingress-controller/install/manifests/
 
 
