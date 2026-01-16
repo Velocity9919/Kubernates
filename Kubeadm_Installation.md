@@ -39,7 +39,7 @@ backend kubernetes-backend
 sudo systemctl restart haproxy
 ```
 
-Step 2: Prepare All Nodes (Masters and Workers)
+## Step 2: Prepare All Nodes (Masters and Workers)
 1. Install Docker, kubeadm, kubelet, and kubectl:
 ```
 sudo apt-get update
