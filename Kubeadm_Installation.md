@@ -158,7 +158,7 @@ git clone https://github.com/nginx/kubernetes-ingress.git --branch v5.3.1
 2. Change the active directory :
 ```
 cd kubernetes-ingress
-``
+```
 3. Create a namespace and a service account:
 ```
 kubectl apply -f deployments/common/ns-and-sa.yaml
