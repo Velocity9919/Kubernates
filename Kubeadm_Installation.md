@@ -182,6 +182,7 @@ kubectl apply -f deployments/common/ingress-class.yaml
 ```
 
 8. Install CRDs after cloning the repo :
+
 ```
 kubectl apply -f config/crd/bases/k8s.nginx.org_virtualservers.yaml
 kubectl apply -f config/crd/bases/k8s.nginx.org_virtualserverroutes.yaml
@@ -193,14 +194,18 @@ kubectl apply -f config/crd/bases/k8s.nginx.org_globalconfigurations.yaml
 9. Deploy NGINX Ingress Controller:
 
 Using a Deployment:
+
 ```
 kubectl apply -f deployments/deployment/nginx-ingress.yaml
 ```
 Using a DaemonSet :
+
 ```
 kubectl apply -f deployments/daemon-set/nginx-ingress.yaml
 ```
+
 Using a StatefulSet :
+
 ```
 kubectl apply -f deployments/stateful-set/nginx-ingress.yaml
 ```
