@@ -192,14 +192,13 @@ kubectl apply -f config/crd/bases/k8s.nginx.org_globalconfigurations.yaml
 ```
 
 9. Deploy NGINX Ingress Controller:
-
 Using a Deployment:
 
 ```
 kubectl apply -f deployments/deployment/nginx-ingress.yaml
 ```
-Using a DaemonSet :
 
+Using a DaemonSet :
 ```
 kubectl apply -f deployments/daemon-set/nginx-ingress.yaml
 ```
