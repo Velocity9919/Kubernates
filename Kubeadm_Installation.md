@@ -53,34 +53,28 @@ CRIO_VERSION=v1.32
 ```
 Add the Kubernetes repository
 ```
-cat <<EOF | tee /etc/yum.repos.d/kubernetes.repo
-[kubernetes]
-name=Kubernetes
-baseurl=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/rpm/repodata/repomd.xml.key
-EOF
+apt-get update
+apt-get install -y software-properties-common curl
+
+curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |
+    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/ /" |
+    tee /etc/apt/sources.list.d/kubernetes.list
+
 ```
 Add the CRI-O repository
 ```
-cat <<EOF | tee /etc/yum.repos.d/cri-o.repo
-[cri-o]
-name=CRI-O
-baseurl=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/
-enabled=1
-gpgcheck=1
-gpgkey=https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/rpm/repodata/repomd.xml.key
-EOF
-```
-Install package dependencies from the official repositories
+curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |
+    gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
 
-```
-dnf install -y container-selinux
+echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/ /" |
+    tee /etc/apt/sources.list.d/cri-o.list
 ```
 Install the packages
 ```
-dnf install -y cri-o kubelet kubeadm kubectl
+apt-get update
+apt-get install -y cri-o kubelet kubeadm kubectl
 ```
 Start CRI-O and enable
 ```
@@ -212,9 +206,11 @@ kubectl apply -f deployments/stateful-set/nginx-ingress.yaml
 ```
 ```
 kubectl get po -n nginx-ingress
-
+```
+```
 kubectl get po -n nginx-ingress -o wide
-
+```
+```
 kubectl edit deploy nginx-ingress -n nginx-ingress
 ```
 go to "sepc:
