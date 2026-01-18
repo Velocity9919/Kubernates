@@ -6,8 +6,11 @@ doc: https://cri-o.io/
 ## Prerequisites
 
 3 master nodes
+
 3 worker nodes
+
 1 load balancer node
+
 All nodes should be running a Linux distribution like Ubuntu
 
 ## Architecture (Recommended)
