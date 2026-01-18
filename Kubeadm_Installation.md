@@ -90,7 +90,7 @@ sysctl -w net.ipv4.ip_forward=1
 ```
 vi /etc/fstab
 ```
-'# /swap. image    none swap 0  0'
+```# /swap. image    none swap 0  0' (we have to comment this)```
 
 ```
 systemctl stop ufw
@@ -217,9 +217,11 @@ kubectl get po -n nginx-ingress -o wide
 ```
 kubectl edit deploy nginx-ingress -n nginx-ingress
 ```
-go to "sepc:
-        hostNetwork : true  (you have to add this above automountServiceAccountToken : true)
-
+go to 
+```
+"sepc:
+        hostNetwork : true   #(you have to add this above automountServiceAccountToken : true)
+```
 now it can use host network ip
 
 https://docs.nginx.com/nginx-ingress-controller/install/manifests/
