@@ -1,85 +1,80 @@
-## HA K8 Cluster
-https://cri-o.io/
+Below is a production-grade, step-by-step guide to set up HAProxy + kubeadm HA Kubernetes cluster on Ubuntu 24.04.
+These are exact commands you can copy-paste.
 
-To set up a highly available Kubernetes cluster with two master nodes and three worker nodes without using a cloud load balancer, you can use a virtual machine to act as a load balancer for the API server. Here are the detailed steps for setting up such a cluster:
+doc: https://cri-o.io/
 
 ## Prerequisites
-   3 master nodes
-   3 worker nodes
-   1 load balancer node
-All nodes should be running a Linux distribution like Ubuntu
 
-## Step 1: Prepare the Load Balancer Node
-1. Install HAProxy:
+3 master nodes 3 worker nodes 1 load balancer node All nodes should be running a Linux distribution like Ubuntu
+
+## Architecture (Recommended)
+
+Node Type	Hostname	Example IP
+
+HAProxy	haproxy	10.0.0.10
+Master 1	master1	10.0.0.11
+Master 2	master2	10.0.0.12
+Master 3	master3	10.0.0.13
+Worker 1	worker1	10.0.0.21
+Worker 2	worker1	10.0.0.22
+Worker 3	worker1	10.0.0.23
+
+## HAProxy will load-balance port 6443 to all masters
+
+##Install & Configure HAProxy (ONLY ON HAProxy NODE)
 ```
-sudo apt-get update
-sudo apt-get install -y haproxy
+sudo apt install -y haproxy
 ```
-2. Configure HAProxy: Edit the HAProxy configuration file (/etc/haproxy/haproxy.cfg):
+
+## Edit config
 ```
-sudo vi /etc/haproxy/haproxy.cfg
+sudo nano /etc/haproxy/haproxy.cfg
 ```
-Add the following configuration:
+
+Replace EVERYTHING with 👇
 ```
-frontend kubernetes-frontend
+global
+    log /dev/log local0
+    maxconn 2000
+    daemon
+
+defaults
+    log global
+    mode tcp
+    timeout connect 10s
+    timeout client  1m
+    timeout server  1m
+
+frontend kubernetes
     bind *:6443
-    option tcplog
-    mode tcp
-    default_backend kubernetes-backend
+    default_backend k8s-masters
 
-backend kubernetes-backend
-    mode tcp
+backend k8s-masters
     balance roundrobin
     option tcp-check
-    server master1 <MASTER1_IP>:6443 check
-    server master2 <MASTER2_IP>:6443 check
+    server master1 10.0.0.11:6443 check
+    server master2 10.0.0.12:6443 check
+    server master3 10.0.0.13:6443 check
 ```
-3. Restart HAProxy:
 ```
 sudo systemctl restart haproxy
+sudo systemctl enable haproxy
 ```
 
-## Step 2: Prepare All Nodes (Masters and Workers)
-1. Install Docker, kubeadm, kubelet, and kubectl:
+✅ HAProxy is now ready
+
+
+## Common setup (RUN ON ALL NODES)
+## Install Docker
 ```
 sudo apt-get update
 sudo apt install docker.io -y
 sudo chmod 666 /var/run/docker.sock
 ```
-Define the Kubernetes version and used CRI-O stream
-```
-KUBERNETES_VERSION=v1.32
-CRIO_VERSION=v1.32
-```
-Add the Kubernetes repository
-```
-apt-get update
-apt-get install -y software-properties-common curl
-
-curl -fsSL https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/Release.key |
-    gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/$KUBERNETES_VERSION/deb/ /" |
-    tee /etc/apt/sources.list.d/kubernetes.list
 
 ```
-Add the CRI-O repository
-```
-curl -fsSL https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/Release.key |
-    gpg --dearmor -o /etc/apt/keyrings/cri-o-apt-keyring.gpg
-
-echo "deb [signed-by=/etc/apt/keyrings/cri-o-apt-keyring.gpg] https://download.opensuse.org/repositories/isv:/cri-o:/stable:/$CRIO_VERSION/deb/ /" |
-    tee /etc/apt/sources.list.d/cri-o.list
-```
-Install the packages
-```
-apt-get update
-apt-get install -y cri-o kubelet kubeadm kubectl
-```
-Start CRI-O and enable
-```
-systemctl start crio.service
-systemctl enable crio.service
+sudo apt update
+sudo apt install -y apt-transport-https ca-certificates curl gpg
 ```
 Bootstrap a cluster
 ```
@@ -87,102 +82,150 @@ swapoff -a
 modprobe br_netfilter
 sysctl -w net.ipv4.ip_forward=1
 ```
-```
-vi /etc/fstab
-```
-```# /swap. image    none swap 0  0' (we have to comment this)```
-
-```
 systemctl stop ufw
 systemctl disable ufw
 ```
+
+## Disable swap
 ```
-kubeadm init
+sudo swapoff -a
+sudo sed -i '/ swap / s/^/#/' /etc/fstab
 ```
-## Step 3: Initialize the First Master Node
-1. Initialize the first master node:
+## Load kernel modules
 ```
-sudo kubeadm init --control-plane-endpoint "LOAD_BALANCER_IP:6443" --upload-certs --pod-network-cidr=10.244.0.0/16
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
 ```
-2. Set up kubeconfig for the first master node:
+## Sysctl settings
 ```
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+sudo sysctl --system
 ```
-3.Install Calico network plugin:
+## Install containerd (ALL NODES)
 ```
-kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+sudo apt install -y containerd
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml
+```
+## Enable systemd cgroup
+```
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' \
+/etc/containerd/config.toml
+```
+```
+sudo systemctl restart containerd
+sudo systemctl enable containerd
+```
+## Install kubeadm, kubelet, kubectl (ALL NODES)
+```
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key |
+sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] \
+https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /" |
+sudo tee /etc/apt/sources.list.d/kubernetes.list
+```
+```
+sudo apt update
+sudo apt install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
 ```
 
-## Step 4: Join the Second & third Master Node
-1. Get the join command and certificate key from the first master node:
+## Initialize Kubernetes (ONLY ON MASTER1)
 ```
-kubeadm token create --print-join-command --certificate-key $(kubeadm init phase upload-certs --upload-certs | tail -1)
+sudo kubeadm init \
+  --control-plane-endpoint "10.0.0.10:6443" \
+  --upload-certs \
+  --pod-network-cidr=10.244.0.0/16 \
+  --kubernetes-version=v1.29.15
 ```
-2. Run the join command on the second master node:
-```
-sudo kubeadm join LOAD_BALANCER_IP:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash> --control-plane --certificate-key <certificate-key>
-```
-3. Set up kubeconfig for the second master node:
+
+⚠️ SAVE the output (join commands are important)
+
+## Configure kubectl (MASTER1)
 ```
 mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
-## Step 5: Join the Worker Nodes
-1. Get the join command from the first master node:
+
+## Install CNI (Flannel – recommended for kubeadm)
 ```
-kubeadm token create --print-join-command
+kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
-2. Run the join command on each worker node:
+
+## Join other Masters (MASTER2 & MASTER3)
+
+Run the control-plane join command you got earlier, example:
 ```
-sudo kubeadm join LOAD_BALANCER_IP:6443 --token <token> --discovery-token-ca-cert-hash sha256:<hash>
+sudo kubeadm join 10.0.0.10:6443 \
+ --token abcdef.0123456789abcdef \
+ --discovery-token-ca-cert-hash sha256:XXXX \
+ --control-plane \
+ --certificate-key YYYY
 ```
-## Step 6: Verify the Cluster
-Check the status of all nodes:
+## Join Worker Nodes
+```
+sudo kubeadm join 10.0.0.10:6443 \
+ --token abcdef.0123456789abcdef \
+ --discovery-token-ca-cert-hash sha256:XXXX
+```
+🔍 Verify Cluster
 ```
 kubectl get nodes
-```
-3. Check the status of all pods:
-```
-kubectl get pods --all-namespaces
+kubectl get pods -A
 ```
 
-## Step 7: Install Ingress-NGINX Controller: (Initialize the First Master Node)
+Expected:
 
-1. Clone the repository :
+All masters → Ready
+
+kube-system pods → Running
+
+## Install Ingress-NGINX Controller:
+
+
+Clone the repository :
 ```
 git clone https://github.com/nginx/kubernetes-ingress.git --branch v5.3.1
 ```
-2. Change the active directory :
+Change the active directory :
 ```
 cd kubernetes-ingress
-```
-3. Create a namespace and a service account:
+``
+Create a namespace and a service account:
 ```
 kubectl apply -f deployments/common/ns-and-sa.yaml
 ```
-4. Create a cluster role and binding for the service account:
+Create a cluster role and binding for the service account:
 ```
 kubectl apply -f deployments/rbac/rbac.yaml
 ```
-5.(Optional) Create a secret for the default NGINX server’s TLS certificate and key.
+1.(Optional) Create a secret for the default NGINX server’s TLS certificate and key.
 
 ```
 kubectl apply -f examples/shared-examples/default-server-secret/default-server-secret.yaml
 ```
-6. Create a ConfigMap to customize your NGINX settings:
+2. Create a ConfigMap to customize your NGINX settings:
 ```
 kubectl apply -f deployments/common/nginx-config.yaml
 ```
-7. Create an IngressClass resource. NGINX Ingress Controller won’t start without an IngressClass resource.
+3. Create an IngressClass resource. NGINX Ingress Controller won’t start without an IngressClass resource.
 ```
 kubectl apply -f deployments/common/ingress-class.yaml
 ```
 
-8. Install CRDs after cloning the repo :
-
+Install CRDs after cloning the repo :
 ```
 kubectl apply -f config/crd/bases/k8s.nginx.org_virtualservers.yaml
 kubectl apply -f config/crd/bases/k8s.nginx.org_virtualserverroutes.yaml
@@ -191,39 +234,28 @@ kubectl apply -f config/crd/bases/k8s.nginx.org_policies.yaml
 kubectl apply -f config/crd/bases/k8s.nginx.org_globalconfigurations.yaml
 ```
 
-9. Deploy NGINX Ingress Controller:
-Using a Deployment:
+Deploy NGINX Ingress Controller:
 
+Using a Deployment:
 ```
 kubectl apply -f deployments/deployment/nginx-ingress.yaml
 ```
-
 Using a DaemonSet :
 ```
 kubectl apply -f deployments/daemon-set/nginx-ingress.yaml
 ```
-
 Using a StatefulSet :
-
 ```
 kubectl apply -f deployments/stateful-set/nginx-ingress.yaml
 ```
 ```
 kubectl get po -n nginx-ingress
-```
-```
+
 kubectl get po -n nginx-ingress -o wide
-```
-```
+
 kubectl edit deploy nginx-ingress -n nginx-ingress
 ```
-go to 
-```
-"sepc:
-        hostNetwork : true   #(you have to add this above automountServiceAccountToken : true)
-```
+go to ```"sepc:
+            hostNetwork : true ``` (you have to add this above automountServiceAccountToken : true)
+
 now it can use host network ip
-
-https://docs.nginx.com/nginx-ingress-controller/install/manifests/
-
-
