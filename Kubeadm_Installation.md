@@ -198,7 +198,7 @@ All masters → Ready
 
 kube-system pods → Running
 
-## Install Ingress-NGINX Controller:
+## Install Ingress-NGINX Controller: (ONLY ON MASTER1)
 
 
 Clone the repository :
