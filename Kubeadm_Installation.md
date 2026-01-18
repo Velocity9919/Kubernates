@@ -17,7 +17,7 @@ sudo apt-get install -y haproxy
 ```
 2. Configure HAProxy: Edit the HAProxy configuration file (/etc/haproxy/haproxy.cfg):
 ```
-sudo nano /etc/haproxy/haproxy.cfg
+sudo vi /etc/haproxy/haproxy.cfg
 ```
 Add the following configuration:
 ```
