@@ -12,16 +12,22 @@ doc: https://cri-o.io/
 Node Type	Hostname	Example IP
 
 HAProxy	haproxy	10.0.0.10
+
 Master 1	master1	10.0.0.11
+
 Master 2	master2	10.0.0.12
+
 Master 3	master3	10.0.0.13
+
 Worker 1	worker1	10.0.0.21
+
 Worker 2	worker1	10.0.0.22
+
 Worker 3	worker1	10.0.0.23
 
 ## HAProxy will load-balance port 6443 to all masters
 
-##Install & Configure HAProxy (ONLY ON HAProxy NODE)
+## Install & Configure HAProxy (ONLY ON HAProxy NODE)
 ```
 sudo apt install -y haproxy
 ```
@@ -63,7 +69,6 @@ sudo systemctl enable haproxy
 
 ✅ HAProxy is now ready
 
-
 ## Common setup (RUN ON ALL NODES)
 ## Install Docker
 ```
@@ -81,6 +86,7 @@ Bootstrap a cluster
 swapoff -a
 modprobe br_netfilter
 sysctl -w net.ipv4.ip_forward=1
+```
 ```
 systemctl stop ufw
 systemctl disable ufw
