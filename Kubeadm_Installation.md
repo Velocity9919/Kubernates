@@ -5,7 +5,10 @@ doc: https://cri-o.io/
 
 ## Prerequisites
 
-3 master nodes 3 worker nodes 1 load balancer node All nodes should be running a Linux distribution like Ubuntu
+3 master nodes
+3 worker nodes
+1 load balancer node
+All nodes should be running a Linux distribution like Ubuntu
 
 ## Architecture (Recommended)
 
@@ -158,19 +161,19 @@ sudo kubeadm init \
 
 ⚠️ SAVE the output (join commands are important)
 
-## Configure kubectl (MASTER1)
+## Configure kubectl ( MASTER1 )
 ```
 mkdir -p $HOME/.kube
 sudo cp /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 
-## Install CNI (Flannel – recommended for kubeadm)
+## Install CNI ( ONLY ON MASTER1 )
 ```
 kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
 ```
 
-## Join other Masters (MASTER2 & MASTER3)
+## Join other Masters ( MASTER2 & MASTER3 )
 
 Run the control-plane join command you got earlier, example:
 ```
@@ -198,7 +201,7 @@ All masters → Ready
 
 kube-system pods → Running
 
-## Install Ingress-NGINX Controller: (ONLY ON MASTER1)
+## Install Ingress-NGINX Controller: ( ONLY ON MASTER1 )
 
 
 Clone the repository :
