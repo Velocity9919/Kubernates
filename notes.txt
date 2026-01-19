@@ -333,6 +333,7 @@ docker ps
 
 Access Nexus, after opening port 8081 for Nexus server. 
 Remember, Nexus wont come immediately in the browser. Wait for sometime and refresh the browser.
+
 Click on Signin ----> Username: admin, To get the password follow as below ----> docker ps ----> Copy the Nexus container ID ----> Lets go inside the container to get the password ----> docker exec -it <ContainerID> /bin/bash ----> ls ----> cd sonatype-work ----> ls ----> cd nexus3 ----> ls ----> cat admin.password ----> Copy the password (dont copy 'bash') ----> Paste in the nexus browser and click on Signin ----> Setup new password ----> Next ----> 'Check' Enable Anonymous Access ----> Next ----> Finish
 
 With this we have setup Jenkins, SonarQube, Nexus and EKS Cluster
@@ -343,8 +344,27 @@ Step 3
 =============================
 3.1. Jenkins Plugin Installation
 =============================
-Install below plugins;
-Eclipse Temurin Installer, SonarQube scanner, Docker, Docker Commons, Docker Pipeline, Docker API, docker-build-step, Pipeline stage view, Email Extension Template, Kubernetes, Kubernetes CLI, Kubernetes Client API, Kubernetes Credentials, Config File Provider, Maven Integration, Pipeline Maven Integration, Prometheus metrics ---> install ---> You will see error while installing Prometheus plugin. Read the error message. Here we need to restart the Jenkins ---> 'Check' the box below 'Go back to the top of page' to restart the Jenkins
+Install below plugins:
+Eclipse Temurin Installer, 
+SonarQube scanner, 
+Docker, 
+Docker Commons, 
+Docker Pipeline, 
+Docker API, 
+docker-build-step, 
+Pipeline stage view, 
+Email Extension Template, 
+Kubernetes, 
+Kubernetes CLI, 
+Kubernetes Client API, 
+Kubernetes Credentials, 
+Config File Provider, 
+Maven Integration, 
+Pipeline Maven Integration, 
+Prometheus metrics 
+---> install 
+---> You will see error while installing Prometheus plugin. Read the error message. Here we need to restart the Jenkins 
+---> 'Check' the box below 'Go back to the top of page' to restart the Jenkins
 
 =============================
 3.2. Tool Configuration
@@ -354,7 +374,8 @@ Goto the Jenkins console (since we restarted, login again to Jenkins) ---> Manag
 ==========================================
 3.3. System Configuration in Jenkins for SonarQube
 ==========================================
-Lets configure the SonarQube server;
+Lets configure the SonarQube server :
+
 Goto SonarQube console --- Click on 'Administration' --- Click on 'Security' --- Select 'Users' --- You can see 'Tokens' --- Click on 3 dashes icon --- A New dialogue --- Name: token, Expires in: 90days --- Generate --- You can see token in green colour. Copy it. 
 Token: squ_dcc638876ea585af501be08adbb861667932da03
 
@@ -389,9 +410,20 @@ From the Nexus browser, copy the 'maven-snapshots' link and paste in the above c
 Save the pom.xml file in the GitHub repo.
 
 Lets configure Nexus in the Jenkins;
-Manage Jenkins --- System Configuration --- Managed Files --- Add a new config  --- Type: Global Maven Settings.xml, Scroll down to ID: maven-setting --- Next --- Scroll down to 'server' tag --- Just above 'another sample' you will see -->, remove that and paste it above the 'server' tag. You can see everything changed to green --- Under 'server' tag, you will see 'deployment repo', remove this and type 'maven-releases' (dont keep single quotes), change the username as 'admin', change the password as 'kastro'.
-Copy the entire edited content and paste below it. Now lets do the same for maven-snapshots;
-in the place of 'maven-releases' provide 'maven-snapshots'. No need to change the username and password --- Submit
+
+--- Manage Jenkins 
+--- System Configuration 
+--- Managed Files 
+--- Add a new config  
+--- Type: Global Maven Settings.xml, Scroll down to ID: maven-setting 
+--- Next 
+--- Scroll down to 'server' tag 
+--- Just above 'another sample' you will see -->, remove that and paste it above the 'server' tag. You can see everything changed to green 
+--- Under 'server' tag, you will see 'deployment repo', remove this and type 'maven-releases' (dont keep single quotes), 
+    change the username as 'admin', change the password as 'kastro'. Copy the entire edited content and paste below it. 
+--- Now lets do the same for maven-snapshots;in the place of 'maven-releases' provide 'maven-snapshots'.
+--- No need to change the username and password 
+--- Submit
 
 ======================================
 3.4.1. Nexus configuration for Jenkins Pipeline
