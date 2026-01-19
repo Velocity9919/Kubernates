@@ -369,21 +369,30 @@ Prometheus metrics
 =============================
 3.2. Tool Configuration
 =============================
-Goto the Jenkins console (since we restarted, login again to Jenkins) ---> Manage Jenkins ---> System Configuration ---> Tools ---> JDK Installation ---> Add JDK ---> Name: jdk17, 'Check' Install automatically, Click on 'Add Installer', Select 'Install from Adoptium.net', Version: jdk-17.0.11+9 ---> SonarQube Scanner Installations ---> Add 'SonarQube Scanner' ---> Name: sonar-scanner, 'Check' Install automatically, Version: Select the latest version 7.0.0.4796 ---> Maven Installations ---> Add Maven ---> Name: maven, Version: 3.9.9 ---> Docker Installations ---> Add Docker---> Name: docker, 'Check' Install automatically,  Click on 'Add Installer', Select 'Download from docker.com', Version: latest ---> Apply ---> Save
+Goto the Jenkins console (since we restarted, login again to Jenkins) ---> Manage Jenkins ---> System Configuration ---> Tools 
+---> JDK Installation ---> Add JDK ---> Name: jdk17, 'Check' Install automatically, Click on 'Add Installer', Select 'Install from Adoptium.net', Version: jdk-17.0.11+9 
+---> SonarQube Scanner Installations ---> Add 'SonarQube Scanner' ---> Name: sonar-scanner, 'Check' Install automatically, Version: Select the latest version 7.0.0.4796 
+---> Maven Installations ---> Add Maven ---> Name: maven, Version: 3.9.9 
+---> Docker Installations ---> Add Docker---> Name: docker, 'Check' Install automatically,  Click on 'Add Installer', Select 'Download from docker.com', Version: latest 
+---> Apply ---> Save
 
 ==========================================
 3.3. System Configuration in Jenkins for SonarQube
 ==========================================
 Lets configure the SonarQube server :
 
-Goto SonarQube console --- Click on 'Administration' --- Click on 'Security' --- Select 'Users' --- You can see 'Tokens' --- Click on 3 dashes icon --- A New dialogue --- Name: token, Expires in: 90days --- Generate --- You can see token in green colour. Copy it. 
+Goto SonarQube console --- Click on 'Administration' --- Click on 'Security' --- Select 'Users' --- You can see 'Tokens' --- Click on 3 dashes icon --- A New dialogue --- 
+
+Name: token, Expires in: 90days --- Generate --- You can see token in green colour. Copy it. 
 Token: squ_dcc638876ea585af501be08adbb861667932da03
 
 Manage Jenkins --- Security --- Credentials --- Click on 'global' --- Click on 'Add Credentials' --- Kind: Secret text, Scope: Global, Secret: <Paste the token copied from SonarQube console>, ID: sonar-token, Description: sonar-token --- Create
 
-Creation of SonarQube webhooks ----> Administration ----> 'Configuration' dropdown ----> Webhooks ----> Click on 'Create' ----> Name: jenkins, URL: <JenkinsURL>:8080/sonarqube-webhook/ ---> Create
+Creation of SonarQube webhooks ----> Administration ----> 'Configuration' dropdown ----> Webhooks ----> Click on 'Create' 
+----> Name: jenkins, URL: <JenkinsURL>:8080/sonarqube-webhook/ ---> Create
 
-Manage Jenkins ---> System ---> Scroll down to 'SonarQube servers' ---> Click on 'Add SonarQube'  ---> Name: sonar, Server URL: paste the SonarQube url. Paste only upto 9000. Dont keep / at the end, Server Authentication Token: Select the 'sonar-token' from drop down ---> Apply ---> Save
+Manage Jenkins ---> System ---> Scroll down to 'SonarQube servers' ---> Click on 'Add SonarQube'  ---> Name: sonar, Server URL: paste the SonarQube url. 
+Paste only upto 9000. Dont keep / at the end, Server Authentication Token: Select the 'sonar-token' from drop down ---> Apply ---> Save
 
 ===================================================
 3.4. Nexus Configuration (to publish the artifacts to the Nexus Repo)
@@ -409,7 +418,7 @@ From the Nexus browser, copy the 'maven-releases' link and paste in the above co
 From the Nexus browser, copy the 'maven-snapshots' link and paste in the above content.
 Save the pom.xml file in the GitHub repo.
 
-Lets configure Nexus in the Jenkins;
+Lets configure Nexus in the Jenkins :
 
 --- Manage Jenkins 
 --- System Configuration 
