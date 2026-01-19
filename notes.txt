@@ -424,8 +424,36 @@ Lets configure Nexus in the Jenkins :
 --- System Configuration 
 --- Managed Files 
 --- Add a new config  
---- Type: Global Maven Settings.xml, Scroll down to ID: maven-setting 
+--- Type: Global Maven Settings.xml, Scroll down to ID: maven-setting  (remove token 1e940b12-3544-4e31-a6eb-d9df9158535a)
 --- Next 
+
+ | NOTE: You should either specify username/password OR privateKey/passphrase, since these pairings are 
+     |       used together.
+     |
+    <server>
+      <id>deploymentRepo</id>
+      <username>repouser</username>
+      <password>repopwd</password>
+    </server>
+    -->
+--> you have to change like this
+	
+ | NOTE: You should either specify username/password OR privateKey/passphrase, since these pairings are 
+     |       used together.
+     |-->
+    <server>
+      <id>maven-releases</id>
+      <username>admin</username>
+      <password>nexus</password>
+    </server>
+    
+	<server>
+      <id>maven-snapshots</id>
+      <username>admin</username>
+      <password>nexus</password>
+    </server>
+
+
 --- Scroll down to 'server' tag 
 --- Just above 'another sample' you will see -->, remove that and paste it above the 'server' tag. You can see everything changed to green 
 --- Under 'server' tag, you will see 'deployment repo', remove this and type 'maven-releases' (dont keep single quotes), 
@@ -433,6 +461,7 @@ Lets configure Nexus in the Jenkins :
 --- Now lets do the same for maven-snapshots;in the place of 'maven-releases' provide 'maven-snapshots'.
 --- No need to change the username and password 
 --- Submit
+
 
 ======================================
 3.4.1. Nexus configuration for Jenkins Pipeline
